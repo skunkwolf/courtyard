@@ -71,10 +71,12 @@ When using TLS with NATS the [offical documentation](https://artifacthub.io/pack
  Now, when you run your script to generate service certificates, you would specify this SAN configuration using the `-s` option, like so:
 
  ```bash
- generate-service-certs.sh -c "NATS Cluster" -o nats-cluster -u "NATS" -s "DNS:nats-0.nats.default.svc.cluster.local, DNS:nats-1.nats.default.svc.cluster.local, DNS:nats-2.nats.default.svc.cluster.local, DNS:nats.example.com"
+ generate-nats-certs.sh -c "NATS Cluster" -o nats-cluster -u "NATS" -s "DNS:nats-0.nats.default.svc.cluster.local, DNS:nats-1.nats.default.svc.cluster.local, DNS:nats-2.nats.default.svc.cluster.local, DNS:nats.example.com"
  ```
 
  This will generate a service certificate with a SAN that covers both client connections and inter-server communication within your NATS cluster.
+
+The repository [skunkwolf/armory](https://github.com/skunkwolf/armory) allows the creation of certificates with a Subject Alternative Name (SAN) using the `-s` flag
 
 ## NATS and Kubernetes 
 
@@ -88,12 +90,21 @@ helm repo update
 
 ### Step 2. Update the required configuration
 
-The [nats-config.yaml](./nats-config.yaml) file contains the default configuration for **Skunkwolf**. Within this file the following are set: 
+The [nats-config.yaml](./nats-config.yaml) file contains the default configuration for **Skunkwolf**. 
+
+In this file:
+
+- The first part defines a headless service for NATS.
+- The second part (separated by ---) contains the Helm chart configuration for NATS.
+- The third part (also separated by ---) defines a Kubernetes secret to hold your TLS certificates and keys.
+
+Within this file the following are set: 
 - Set cluster.enabled to true to enable clustering.
 - Set cluster.replicas to 3 for a 3-node cluster.
 - Enable TLS for the cluster with cluster.tls.enabled set to true.
 - Specify the Kubernetes secret containing your TLS certificates with cluster.tls.secret.name.
 - Enable JetStream with jetstream.enabled set to true, and configure memory and file storage for JetStream.
+
 
 Changes can be made to this configuration as needed. 
 
@@ -102,7 +113,7 @@ Changes can be made to this configuration as needed.
 In order to deploy NATS with the update configuration use this command: 
 
 ```bash
-helm install nats nats/nats -f nats-config.yaml
+helm install skunkwolf-nats nats/nats -f nats-config.yaml
 ```
 
 ### Step 4. Verify that the NATS Pods are running
